@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fort Collins Recreation Pass Calculator</title>
+    <style>
+        :root {
+            --color-bg-primary: #fcfcf9;
+            --color-bg-surface: #fffffe;
+            --color-text-primary: #13343b;
+            --color-text-secondary: #626c7c;
+            --color-primary: #21808d;
+            --color-primary-hover: #1d7480;
+            --color-border: rgba(94, 82, 64, 0.2);
+            --color-success: #21808d;
+            --color-warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: var(--color-primary);
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--color-bg-surface);
+            color: var(--color-text-primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-group {
+            margin-bottom: 24px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background: var(--color-bg-primary);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .result-card.best {
+            border-color: var(--color-success);
+            background: rgba(33, 128, 141, 0.08);
+            box-shadow: 0 4px 12px rgba(33, 128, 141, 0.15);
+        }
+
+        .result-card.best .badge {
+            display: inline-block;
+            background: var(--color-success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .result-card .badge {
+            display: none;
+        }
+
+        .result-card h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            color: var(--color-text-primary);
+        }
+
+        .annual-cost {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 4px;
+        }
+
+        .cost-per-visit {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+
+        .info-box {
+            background: rgba(33, 128, 141, 0.08);
+            border-left: 4px solid var(--color-primary);
+            padding: 16px;
+            border-radius: 4px;
+            margin-top: 24px;
+        }
+
+        .info-box h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: var(--color-primary);
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-box li {
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 640px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fort Collins Recreation Pass Calculator</h1>
+            <p class="subtitle">Non-Resident pricing - Find the best value based on your visits</p>
+        </header>
+
+        <div class="card">
+            <h2>Your Information</h2>
+            
+            <div class="form-group">
+                <label for="ageGroup">Age Group</label>
+                <select id="ageGroup">
+                    <option value="youth">Youth (ages 2-18)</option>
+                    <option value="adult" selected>Adult (ages 19-59)</option>
+                    <option value="senior">Senior (ages 60-84)</option>
+                    <option value="senior85">Senior (ages 85+)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Visit Frequency</h2>
+            
+            <div class="slider-group">
+                <div class="slider-label">
+                    <label for="visitsPerWeek">Visits per Week</label>
+                    <span class="slider-value" id="weekValue">2</span>
+                </div>
+                <input type="range" id="visitsPerWeek" min="0" max="7" value="2" step="0.5">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <label for="visitsPerMonth">Visits per Month</label>
+                    <span class="slider-value" id="monthValue">0</span>
+                </div>
+                <input type="range" id="visitsPerMonth" min="0" max="30" value="0" step="1">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <label for="visitsPerYear">Visits per Year</label>
+                    <span class="slider-value" id="yearValue">0</span>
+                </div>
+                <input type="range" id="visitsPerYear" min="0" max="365" value="0" step="5">
+            </div>
+
+            <div class="info-box">
+                <h3>Total Annual Visits: <span id="totalVisits">104</span></h3>
+                <ul>
+                    <li>Adjust any slider to see how different pass options compare</li>
+                    <li>The calculator will show the most cost-effective option</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Cost Comparison <span style="font-weight: 400; font-size: 0.9rem; color: var(--color-text-secondary);">*over one year</span></h2>
+            <div class="results-grid" id="results">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pricing = {
+            youth: { dropin: 10, month1: 50, month6: 250, annual: 450 },
+            adult: { dropin: 12, month1: 60, month6: 300, annual: 540 },
+            senior: { dropin: 10, month1: 50, month6: 250, annual: 450 },
+            senior85: { dropin: 0, month1: 0, month6: 0, annual: 0 }
+        };
+
+        const elements = {
+            ageGroup: document.getElementById('ageGroup'),
+            visitsPerWeek: document.getElementById('visitsPerWeek'),
+            visitsPerMonth: document.getElementById('visitsPerMonth'),
+            visitsPerYear: document.getElementById('visitsPerYear'),
+            weekValue: document.getElementById('weekValue'),
+            monthValue: document.getElementById('monthValue'),
+            yearValue: document.getElementById('yearValue'),
+            totalVisits: document.getElementById('totalVisits'),
+            results: document.getElementById('results')
+        };
+
+        function calculateTotalVisits() {
+            const fromWeek = parseFloat(elements.visitsPerWeek.value) * 52;
+            const fromMonth = parseFloat(elements.visitsPerMonth.value) * 12;
+            const fromYear = parseFloat(elements.visitsPerYear.value);
+            return Math.max(fromWeek, fromMonth, fromYear);
+        }
+
+        function updateSliderDisplay() {
+            elements.weekValue.textContent = elements.visitsPerWeek.value;
+            elements.monthValue.textContent = elements.visitsPerMonth.value;
+            elements.yearValue.textContent = elements.yearValue.value;
+            
+            const total = calculateTotalVisits();
+            elements.totalVisits.textContent = Math.round(total);
+        }
+
+        function calculateCosts() {
+            const ageGroup = elements.ageGroup.value;
+            const totalVisits = calculateTotalVisits();
+            
+            if (totalVisits === 0) {
+                elements.results.innerHTML = '<p style="text-align: center; color: var(--color-text-secondary);">Adjust the sliders to see cost comparisons</p>';
+                return;
+            }
+
+            const prices = pricing[ageGroup];
+            
+            if (prices.dropin === 0) {
+                elements.results.innerHTML = '<p style="text-align: center; color: var(--color-success); font-weight: 600;">Free admission for ages 85+!</p>';
+                return;
+            }
+
+            const options = [
+                {
+                    name: 'Drop-In',
+                    annualCost: totalVisits * prices.dropin,
+                    costPerVisit: prices.dropin
+                },
+                {
+                    name: '1-Month Pass',
+                    annualCost: prices.month1 * 12,
+                    costPerVisit: (prices.month1 * 12) / totalVisits
+                },
+                {
+                    name: '6-Month Pass',
+                    annualCost: prices.month6 * 2,
+                    costPerVisit: (prices.month6 * 2) / totalVisits
+                },
+                {
+                    name: 'Annual Pass',
+                    annualCost: prices.annual,
+                    costPerVisit: prices.annual / totalVisits
+                }
+            ];
+
+            const minCost = Math.min(...options.map(opt => opt.annualCost));
+            
+            elements.results.innerHTML = options.map((option, index) => {
+                const isBest = option.annualCost === minCost;
+                const passPrice = index === 0 ? prices.dropin : 
+                                 index === 1 ? prices.month1 : 
+                                 index === 2 ? prices.month6 : 
+                                 prices.annual;
+                const frequency = index === 0 ? 'per visit' : 
+                                 index === 1 ? 'per month' : 
+                                 index === 2 ? 'per 6 months' : 
+                                 'per year';
+                return `
+                    <div class="result-card ${isBest ? 'best' : ''}">
+                        <div class="badge">BEST VALUE</div>
+                        <h3>${option.name}</h3>
+                        <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 8px;">$${passPrice} ${frequency}</div>
+                        <div class="annual-cost">$${Math.round(option.annualCost)}</div>
+                        <div class="cost-per-visit">$${option.costPerVisit.toFixed(2)} per visit</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        elements.ageGroup.addEventListener('change', calculateCosts);
+        elements.visitsPerWeek.addEventListener('input', () => {
+            updateSliderDisplay();
+            calculateCosts();
+        });
+        elements.visitsPerMonth.addEventListener('input', () => {
+            updateSliderDisplay();
+            calculateCosts();
+        });
+        elements.visitsPerYear.addEventListener('input', () => {
+            updateSliderDisplay();
+            calculateCosts();
+        });
+
+        updateSliderDisplay();
+        calculateCosts();
+    </script>
+</body>
+</html>
+
