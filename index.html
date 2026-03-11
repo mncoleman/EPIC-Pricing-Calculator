@@ -133,9 +133,8 @@
 
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
 
         .result-card {
@@ -210,6 +209,15 @@
             margin-bottom: 4px;
         }
 
+        @media (max-width: 900px) {
+            .card > div {
+                grid-template-columns: 1fr !important;
+            }
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
         @media (max-width: 640px) {
             .results-grid {
                 grid-template-columns: 1fr;
@@ -225,59 +233,57 @@
         </header>
 
         <div class="card">
-            <h2>Your Information</h2>
-            
-            <div class="form-group">
-                <label for="ageGroup">Age Group</label>
-                <select id="ageGroup">
-                    <option value="youth">Youth (ages 2-18)</option>
-                    <option value="adult" selected>Adult (ages 19-59)</option>
-                    <option value="senior">Senior (ages 60-84)</option>
-                    <option value="senior85">Senior (ages 85+)</option>
-                </select>
-            </div>
-        </div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 32px; align-items: start;">
+                <div>
+                    <h2 style="margin-bottom: 20px;">Your Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="ageGroup">Age Group</label>
+                        <select id="ageGroup">
+                            <option value="youth">Youth (ages 2-18)</option>
+                            <option value="adult" selected>Adult (ages 19-59)</option>
+                            <option value="senior">Senior (ages 60-84)</option>
+                            <option value="senior85">Senior (ages 85+)</option>
+                        </select>
+                    </div>
 
-        <div class="card">
-            <h2>Visit Frequency</h2>
-            
-            <div class="slider-group">
-                <div class="slider-label">
-                    <label for="visitsPerWeek">Visits per Week</label>
-                    <span class="slider-value" id="weekValue">2</span>
+                    <h2 style="margin-top: 32px; margin-bottom: 20px;">Visit Frequency</h2>
+                    
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label for="visitsPerWeek">Visits per Week</label>
+                            <span class="slider-value" id="weekValue">2</span>
+                        </div>
+                        <input type="range" id="visitsPerWeek" min="0" max="7" value="2" step="1">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label for="visitsPerMonth">Visits per Month</label>
+                            <span class="slider-value" id="monthValue">0</span>
+                        </div>
+                        <input type="range" id="visitsPerMonth" min="0" max="30" value="0" step="1">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label for="visitsPerYear">Visits per Year</label>
+                            <span class="slider-value" id="yearValue">0</span>
+                        </div>
+                        <input type="range" id="visitsPerYear" min="0" max="365" value="0" step="5">
+                    </div>
+
+                    <div class="info-box">
+                        <h3>Total Annual Visits: <span id="totalVisits">104</span></h3>
+                    </div>
                 </div>
-                <input type="range" id="visitsPerWeek" min="0" max="7" value="2" step="0.5">
-            </div>
 
-            <div class="slider-group">
-                <div class="slider-label">
-                    <label for="visitsPerMonth">Visits per Month</label>
-                    <span class="slider-value" id="monthValue">0</span>
+                <div>
+                    <h2 style="margin-bottom: 20px;">Cost Comparison <span style="font-weight: 400; font-size: 0.9rem; color: var(--color-text-secondary);">*over one year</span></h2>
+                    <div class="results-grid" id="results">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
                 </div>
-                <input type="range" id="visitsPerMonth" min="0" max="30" value="0" step="1">
-            </div>
-
-            <div class="slider-group">
-                <div class="slider-label">
-                    <label for="visitsPerYear">Visits per Year</label>
-                    <span class="slider-value" id="yearValue">0</span>
-                </div>
-                <input type="range" id="visitsPerYear" min="0" max="365" value="0" step="5">
-            </div>
-
-            <div class="info-box">
-                <h3>Total Annual Visits: <span id="totalVisits">104</span></h3>
-                <ul>
-                    <li>Adjust any slider to see how different pass options compare</li>
-                    <li>The calculator will show the most cost-effective option</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Cost Comparison <span style="font-weight: 400; font-size: 0.9rem; color: var(--color-text-secondary);">*over one year</span></h2>
-            <div class="results-grid" id="results">
-                <!-- Results will be populated by JavaScript -->
             </div>
         </div>
     </div>
@@ -312,7 +318,7 @@
         function updateSliderDisplay() {
             elements.weekValue.textContent = elements.visitsPerWeek.value;
             elements.monthValue.textContent = elements.visitsPerMonth.value;
-            elements.yearValue.textContent = elements.yearValue.value;
+            elements.yearValue.textContent = elements.visitsPerYear.value;
             
             const total = calculateTotalVisits();
             elements.totalVisits.textContent = Math.round(total);
@@ -321,11 +327,6 @@
         function calculateCosts() {
             const ageGroup = elements.ageGroup.value;
             const totalVisits = calculateTotalVisits();
-            
-            if (totalVisits === 0) {
-                elements.results.innerHTML = '<p style="text-align: center; color: var(--color-text-secondary);">Adjust the sliders to see cost comparisons</p>';
-                return;
-            }
 
             const prices = pricing[ageGroup];
             
@@ -338,22 +339,22 @@
                 {
                     name: 'Drop-In',
                     annualCost: totalVisits * prices.dropin,
-                    costPerVisit: prices.dropin
+                    costPerVisit: totalVisits === 0 ? 0 : prices.dropin
                 },
                 {
                     name: '1-Month Pass',
                     annualCost: prices.month1 * 12,
-                    costPerVisit: (prices.month1 * 12) / totalVisits
+                    costPerVisit: totalVisits === 0 ? 0 : (prices.month1 * 12) / totalVisits
                 },
                 {
                     name: '6-Month Pass',
                     annualCost: prices.month6 * 2,
-                    costPerVisit: (prices.month6 * 2) / totalVisits
+                    costPerVisit: totalVisits === 0 ? 0 : (prices.month6 * 2) / totalVisits
                 },
                 {
                     name: 'Annual Pass',
                     annualCost: prices.annual,
-                    costPerVisit: prices.annual / totalVisits
+                    costPerVisit: totalVisits === 0 ? 0 : prices.annual / totalVisits
                 }
             ];
 
@@ -374,7 +375,7 @@
                         <div class="badge">BEST VALUE</div>
                         <h3>${option.name}</h3>
                         <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 8px;">$${passPrice} ${frequency}</div>
-                        <div class="annual-cost">$${Math.round(option.annualCost)}</div>
+                        <div class="annual-cost">$${Math.round(option.annualCost)}<span style="font-size: 1rem; font-weight: 400;">/year</span></div>
                         <div class="cost-per-visit">$${option.costPerVisit.toFixed(2)} per visit</div>
                     </div>
                 `;
@@ -400,4 +401,3 @@
     </script>
 </body>
 </html>
-
