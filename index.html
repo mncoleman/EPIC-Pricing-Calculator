@@ -238,6 +238,14 @@
                     <h2 style="margin-bottom: 20px;">Your Information</h2>
                     
                     <div class="form-group">
+                        <label for="planType">Plan Type</label>
+                        <select id="planType">
+                            <option value="single" selected>Single</option>
+                            <option value="family">Family</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="ageGroupContainer">
                         <label for="ageGroup">Age Group</label>
                         <select id="ageGroup">
                             <option value="youth">Youth (ages 2-18)</option>
@@ -245,6 +253,29 @@
                             <option value="senior">Senior (ages 60-84)</option>
                             <option value="senior85">Senior (ages 85+)</option>
                         </select>
+                    </div>
+
+                    <div id="familyCountContainer" style="display: none;">
+                        <div class="form-group">
+                            <label for="adultCount">Number of Adults (max 2)</label>
+                            <select id="adultCount">
+                                <option value="1">1 Adult</option>
+                                <option value="2" selected>2 Adults</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="childCount">Number of Children</label>
+                            <select id="childCount">
+                                <option value="0">0 Children</option>
+                                <option value="1">1 Child</option>
+                                <option value="2" selected>2 Children</option>
+                                <option value="3">3 Children</option>
+                                <option value="4">4 Children</option>
+                                <option value="5">5 Children</option>
+                                <option value="6">6+ Children</option>
+                            </select>
+                        </div>
                     </div>
 
                     <h2 style="margin-top: 32px; margin-bottom: 20px;">Visit Frequency</h2>
@@ -290,14 +321,27 @@
 
     <script>
         const pricing = {
-            youth: { dropin: 10, month1: 50, month6: 250, annual: 450 },
-            adult: { dropin: 12, month1: 60, month6: 300, annual: 540 },
-            senior: { dropin: 10, month1: 50, month6: 250, annual: 450 },
-            senior85: { dropin: 0, month1: 0, month6: 0, annual: 0 }
+            single: {
+                youth: { dropin: 10, month1: 50, month6: 250, annual: 450 },
+                adult: { dropin: 12, month1: 60, month6: 300, annual: 540 },
+                senior: { dropin: 10, month1: 50, month6: 250, annual: 450 },
+                senior85: { dropin: 0, month1: 0, month6: 0, annual: 0 }
+            },
+            family: {
+                youth: { dropin: 10, month1: 96, month6: 480, annual: 864 },
+                adult: { dropin: 12, month1: 96, month6: 480, annual: 864 },
+                senior: { dropin: 10, month1: 96, month6: 480, annual: 864 },
+                senior85: { dropin: 0, month1: 0, month6: 0, annual: 0 }
+            }
         };
 
         const elements = {
+            planType: document.getElementById('planType'),
             ageGroup: document.getElementById('ageGroup'),
+            ageGroupContainer: document.getElementById('ageGroupContainer'),
+            familyCountContainer: document.getElementById('familyCountContainer'),
+            adultCount: document.getElementById('adultCount'),
+            childCount: document.getElementById('childCount'),
             visitsPerWeek: document.getElementById('visitsPerWeek'),
             visitsPerMonth: document.getElementById('visitsPerMonth'),
             visitsPerYear: document.getElementById('visitsPerYear'),
@@ -324,64 +368,86 @@
             elements.totalVisits.textContent = Math.round(total);
         }
 
+        function updatePlanTypeUI() {
+            const planType = elements.planType.value;
+            if (planType === 'family') {
+                elements.ageGroupContainer.style.display = 'none';
+            } else {
+                elements.ageGroupContainer.style.display = 'block';
+            }
+        }
+
         function calculateCosts() {
+            const planType = elements.planType.value;
             const ageGroup = elements.ageGroup.value;
             const totalVisits = calculateTotalVisits();
 
-            const prices = pricing[ageGroup];
+            const familySize = planType === 'family' ? 2 : 1;
+
+            const prices = pricing[planType][ageGroup];
             
-            if (prices.dropin === 0) {
+            if (prices.dropin === 0 && prices.month1 === 0) {
                 elements.results.innerHTML = '<p style="text-align: center; color: var(--color-success); font-weight: 600;">Free admission for ages 85+!</p>';
                 return;
-            }
-
-            const options = [
-                {
+            }            const options = [];
+            
+            if (prices.dropin > 0) {
+                options.push({
                     name: 'Drop-In',
                     annualCost: totalVisits * prices.dropin,
                     costPerVisit: totalVisits === 0 ? 0 : prices.dropin
-                },
+                });
+            }
+            
+            options.push(
                 {
                     name: '1-Month Pass',
-                    annualCost: prices.month1 * 12,
-                    costPerVisit: totalVisits === 0 ? 0 : (prices.month1 * 12) / totalVisits
+                    annualCost: (prices.month1 * 12) / familySize,
+                    costPerVisit: totalVisits === 0 ? 0 : ((prices.month1 * 12) / totalVisits) / familySize
                 },
+
                 {
                     name: '6-Month Pass',
-                    annualCost: prices.month6 * 2,
-                    costPerVisit: totalVisits === 0 ? 0 : (prices.month6 * 2) / totalVisits
+                    annualCost: (prices.month6 * 2) / familySize,
+                    costPerVisit: totalVisits === 0 ? 0 : ((prices.month6 * 2) / totalVisits) / familySize
                 },
                 {
                     name: 'Annual Pass',
-                    annualCost: prices.annual,
-                    costPerVisit: totalVisits === 0 ? 0 : prices.annual / totalVisits
+                    annualCost: prices.annual / familySize,
+                    costPerVisit: totalVisits === 0 ? 0 : (prices.annual / totalVisits) / familySize
                 }
-            ];
+            );
 
             const minCost = Math.min(...options.map(opt => opt.annualCost));
             
-            elements.results.innerHTML = options.map((option, index) => {
+            elements.results.innerHTML = options.map((option) => {
                 const isBest = option.annualCost === minCost;
-                const passPrice = index === 0 ? prices.dropin : 
-                                 index === 1 ? prices.month1 : 
-                                 index === 2 ? prices.month6 : 
+                const isDropIn = option.name === 'Drop-In';
+                const passPrice = isDropIn ? prices.dropin : 
+                                 option.name === '1-Month Pass' ? prices.month1 : 
+                                 option.name === '6-Month Pass' ? prices.month6 : 
                                  prices.annual;
-                const frequency = index === 0 ? 'per visit' : 
-                                 index === 1 ? 'per month' : 
-                                 index === 2 ? 'per 6 months' : 
+                const frequency = isDropIn ? 'per visit' : 
+                                 option.name === '1-Month Pass' ? 'per month' : 
+                                 option.name === '6-Month Pass' ? 'per 6 months' : 
                                  'per year';
+                const perPersonLabel = (planType === 'family' && !isDropIn) ? ' per person' : '';
                 return `
                     <div class="result-card ${isBest ? 'best' : ''}">
                         <div class="badge">BEST VALUE</div>
                         <h3>${option.name}</h3>
                         <div style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 8px;">$${passPrice} ${frequency}</div>
-                        <div class="annual-cost">$${Math.round(option.annualCost)}<span style="font-size: 1rem; font-weight: 400;">/year</span></div>
-                        <div class="cost-per-visit">$${option.costPerVisit.toFixed(2)} per visit</div>
+                        <div class="annual-cost">$${Math.round(option.annualCost)}<span style="font-size: 1rem; font-weight: 400;">/year${perPersonLabel}</span></div>
+                        <div class="cost-per-visit">$${option.costPerVisit.toFixed(2)} per visit${perPersonLabel}</div>
                     </div>
                 `;
             }).join('');
         }
 
+        elements.planType.addEventListener('change', () => {
+            updatePlanTypeUI();
+            calculateCosts();
+        });
         elements.ageGroup.addEventListener('change', calculateCosts);
         elements.visitsPerWeek.addEventListener('input', () => {
             updateSliderDisplay();
@@ -396,6 +462,7 @@
             calculateCosts();
         });
 
+        updatePlanTypeUI();
         updateSliderDisplay();
         calculateCosts();
     </script>
